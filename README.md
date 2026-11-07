@@ -4,7 +4,7 @@ An endless runner paced by [Squeektoshi](https://squeekchain.com)’s live wheel
 
 This is a community project built for the Squeekchain Genesis **Code** path and The Buildooooor badge. It is not affiliated with Squeekchain. GitHub: [SIRIBRAHEEM](https://github.com/SIRIBRAHEEM). X: [@siribraheem33](https://x.com/siribraheem33).
 
-There is no wallet connection, no signing, and no real-money play. Scores live in this browser.
+A wallet is optional and read-only: it names the run and, for Squeek holders, changes the hamster’s look. Nothing is signed, approved, or sent. Guests play the same game. Scores stay in this browser.
 
 ## How the chain drives the game
 
@@ -20,6 +20,7 @@ Public reads come from `https://api.squeekchain.com`. The docs allow browser cal
 | Shared course | `GET /v1/settlements?range=24h` | Newest `recentSettlements[]` row that completed blocks: `transactionHash` is the seed, plus `settledThroughRound` and `blockHeight` |
 | Pre-run call | `GET /v1/settlements?range=24h` | That row’s `workAdded`. You call whether the **next** block-completing settlement adds more or less. Rounds that complete no blocks are counted by the API but not listed, so the course can lag the settled round while he rests |
 | SQK spark value | `GET /v1/settlements?range=24h` | `recentSettlements[].sqkMintedBaseUnits`, formatted with `mining.economy.decimals` and labeled with `mining.economy.symbol` |
+| Holder skin | `GET /v1/accounts/{address}?limit=25` | Only when `status` is `available`: `tokenCounts.wallet`, `tokenCounts.staking`, `rewards.claimableBaseUnits`. `unavailable` is shown as unknown, not zero |
 
 `GET /v1/economy/state` was checked while building this. Issuance for a round is already on the settlements payload, so the game does not download the full deployment document just to print a supply figure.
 
@@ -29,12 +30,20 @@ A hit on the call doubles that run’s score on this device once a newer `recent
 
 Beating the ghost at the whistle adds 25%. The ghost is only drawn when `distanceMm` was actually returned.
 
+## Pages
+
+`/` is the landing page. **Play now** opens `/play` and starts a run in one step. A wallet is not required. `/play` can be shared on its own; a direct visit shows the sprint button instead of auto-starting. Browser back returns to the landing page. `vercel.json` rewrites `/play` to `index.html`.
+
+The optional call on the landing (more work / less work) is attached to that Play now press. On `/play` the same choice sits on the ready card.
+
+Connect wallet uses EIP-6963 to list injected wallets, then `window.ethereum` if nothing announced. It remembers the last wallet and reconnects with `eth_accounts` (no popup). Sepolia (`chainId` 11155111) can be switched or added. The address, or an ENS name when a mainnet reverse record verifies, is the name on the board and the share card. Holders get a gold-ear skin only.
+
 ## Play
 
-1. Open the site. The strip under the title is live telemetry: RPM, wheel state, settled block, settled round, course hash.
-2. Pick **More work** or **Less work**, or sprint with no call.
+1. Land on `/`. The status strip is live telemetry, or it says **Offline** and the course chip says `course offline`.
+2. Press **Play now**, or open `/play` and press **Sprint**.
 3. Jump crates and spokes, duck beams, clear gaps. You get three lives, a shield blocks one hit, the magnet pulls pickups, and the sprocket is a short burst that also helps you pass the ghost.
-4. Game over stores the run. Share posts an X intent with the score, the course hash and this site’s URL. No API key.
+4. Game over stores the run. Share posts an X intent with the score, the course, and `/play`. No API key.
 
 **Keyboard:** Space / ↑ / W jump, ↓ / S duck, P pause, M mute. Double jump is allowed. Tap jump early and hold for a fuller hop.
 
@@ -49,7 +58,7 @@ npm install
 npm run dev
 ```
 
-Vite serves the game and proxies `/api/status` and `/api/settlements` to the public API. `npm run typecheck` runs `tsc --noEmit`. `npm run build` typechecks and writes `dist/`.
+Vite serves the landing page and proxies `/api/status`, `/api/settlements`, and `/api/account` to the public API. `npm run typecheck` runs `tsc --noEmit`. `npm run build` typechecks and writes `dist/`.
 
 ## Deploy on Vercel
 

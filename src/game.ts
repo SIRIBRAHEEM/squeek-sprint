@@ -27,6 +27,8 @@ import type {
 
 export interface StartOpts {
   nickname: string;
+  address: string | null;
+  holder: boolean;
   prediction: CallSide | null;
   snapshot: ChainSnapshot;
 }
@@ -83,6 +85,8 @@ export class Game {
   runChain: ChainSnapshot | null = null;
   prediction: CallSide | null = null;
   nickname = "Squeeker";
+  address: string | null = null;
+  holder = false;
   lastRun: RunRecord | null = null;
 
   private canvas: HTMLCanvasElement;
@@ -148,6 +152,8 @@ export class Game {
 
   start(opts: StartOpts): void {
     this.nickname = opts.nickname;
+    this.address = opts.address;
+    this.holder = opts.holder;
     this.prediction = opts.prediction;
     this.runChain = opts.snapshot;
     this.resetWorld(opts.snapshot.course.seed);
@@ -582,6 +588,7 @@ export class Game {
     const run: RunRecord = {
       id: crypto.randomUUID(),
       nickname: this.nickname,
+      address: this.address,
       at: Date.now(),
       seed: snap?.course.seed ?? this.course.seed,
       seedShort: snap?.course.short ?? this.course.seed.slice(0, 8),
@@ -672,6 +679,7 @@ export class Game {
         wheelKnown: this.wheelKnown,
         viewW,
         skyExtra,
+        holder: this.holder,
       },
       this.reduceMotion,
     );

@@ -124,6 +124,7 @@ export interface ChainSnapshot {
 export interface RunRecord {
   id: string;
   nickname: string;
+  address?: string | null;
   at: number;
   seed: string;
   seedShort: string;

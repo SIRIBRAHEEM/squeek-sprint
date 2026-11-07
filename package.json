@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@fontsource/lilita-one": "^5.2.5",
-    "@fontsource/nunito": "^5.2.5"
+    "@fontsource/nunito": "^5.2.5",
+    "@noble/hashes": "^1.8.0"
   },
   "devDependencies": {
     "typescript": "~5.7.3",

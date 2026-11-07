@@ -22,6 +22,7 @@ export interface Scene {
   wheelKnown: boolean;
   viewW: number;
   skyExtra: number;
+  holder: boolean;
 }
 
 interface Palette {
@@ -491,6 +492,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, scene: Scene): void {
     night: scene.visual === "night",
     ghost: false,
     blink: Math.sin(scene.time * 0.7) > 0.97,
+    holder: scene.holder,
   });
   if (scene.shield) {
     ctx.strokeStyle = "rgba(126,200,255,0.9)";
@@ -522,6 +524,7 @@ interface HamsterOpts {
   night: boolean;
   ghost: boolean;
   blink: boolean;
+  holder?: boolean;
 }
 
 function drawHamster(
@@ -580,7 +583,7 @@ function drawHamster(
   ctx.ellipse(-10, 8, 8, 10, -0.3, 0, Math.PI * 2);
   ctx.ellipse(12, 6, 8, 10, 0.2, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#f0a0b0";
+  ctx.fillStyle = opts.holder ? "#f2c14e" : "#f0a0b0";
   ctx.beginPath();
   ctx.ellipse(-10, 9, 4, 5, -0.3, 0, Math.PI * 2);
   ctx.ellipse(12, 7, 4, 5, 0.2, 0, Math.PI * 2);
@@ -623,6 +626,12 @@ function drawHamster(
   ctx.ellipse(11, 15, 2.3, 1.6, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  if (opts.holder && !opts.ghost) {
+    ctx.fillStyle = "#f2c14e";
+    ctx.fillRect(-6, 20, 24, 5);
+    ctx.fillStyle = "#2a1b12";
+    ctx.fillRect(4, 20, 4, 5);
+  }
   if (opts.night && !opts.ghost) {
     ctx.fillStyle = "rgba(255, 214, 120, 0.35)";
     ctx.beginPath();
