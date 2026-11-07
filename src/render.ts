@@ -23,6 +23,8 @@ export interface Scene {
   viewW: number;
   skyExtra: number;
   holder: boolean;
+  bestGhost: { x: number; y: number; duck: boolean } | null;
+  eventText: string;
 }
 
 interface Palette {
@@ -131,7 +133,9 @@ export function renderFrame(ctx: CanvasRenderingContext2D, scene: Scene, reduceM
   drawGround(ctx, scene, pal);
   for (const ent of scene.ents) drawEnt(ctx, scene, ent);
   if (scene.ghostX !== null) drawGhost(ctx, scene);
+  if (scene.bestGhost) drawBestGhost(ctx, scene);
   drawPlayer(ctx, scene);
+  if (scene.eventText) drawEvent(ctx, scene);
   drawParticles(ctx, scene);
   drawFloaters(ctx, scene);
   if (scene.shake > 0.15) {
@@ -477,6 +481,47 @@ function drawGhost(ctx: CanvasRenderingContext2D, scene: Scene): void {
   ctx.font = "700 12px Nunito, Trebuchet MS, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText(label, clamped + 20, GROUND - 44);
+  ctx.restore();
+  ctx.textAlign = "left";
+}
+
+function drawBestGhost(ctx: CanvasRenderingContext2D, scene: Scene): void {
+  const ghost = scene.bestGhost;
+  if (!ghost) return;
+  const x = screenX(ghost.x, scene.cameraX);
+  if (x < -80 || x > scene.viewW + 40) return;
+  ctx.save();
+  ctx.globalAlpha = 0.45;
+  drawHamster(ctx, x, ghost.y, 52, 48, {
+    run: scene.time * 10,
+    duck: ghost.duck,
+    onGround: true,
+    squash: 0,
+    night: false,
+    ghost: false,
+    blink: false,
+    holder: true,
+  });
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = "#fff6ea";
+  ctx.font = "800 12px Nunito, Trebuchet MS, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Best", x + 26, ghost.y - 8);
+  ctx.restore();
+  ctx.textAlign = "left";
+}
+
+function drawEvent(ctx: CanvasRenderingContext2D, scene: Scene): void {
+  ctx.save();
+  ctx.font = "800 18px Nunito, Trebuchet MS, sans-serif";
+  ctx.textAlign = "center";
+  const width = Math.min(scene.viewW - 40, ctx.measureText(scene.eventText).width + 28);
+  const x = (scene.viewW - width) / 2;
+  ctx.fillStyle = "rgba(20, 12, 8, 0.78)";
+  roundRect(ctx, x, 74, width, 32, 16);
+  ctx.fill();
+  ctx.fillStyle = "#fff6ea";
+  ctx.fillText(scene.eventText, scene.viewW / 2, 96);
   ctx.restore();
   ctx.textAlign = "left";
 }

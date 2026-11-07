@@ -51,6 +51,7 @@ async function fetchJson(url: string, via: "direct" | "proxy"): Promise<FetchHit
   try {
     const res = await fetch(url, {
       headers: { accept: "application/json" },
+      cache: "no-store",
       signal: ctrl.signal,
     });
     const ctype = res.headers.get("content-type") || "";

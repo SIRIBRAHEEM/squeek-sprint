@@ -40,6 +40,10 @@
           <button id="land-below" type="button" aria-pressed="false">Less work · 2×</button>
         </div>
         <p id="land-call-note" class="fine">No call selected. Play now starts immediately.</p>
+        <aside class="safety">
+          <p><strong>Connecting only shares your public address.</strong> Squeek Sprint never asks for your private key or seed phrase, never requests signatures, approvals or transactions, and can’t move your funds. Never share your seed phrase with anyone. Always do your own research (DYOR).</p>
+          <p>Community project, not affiliated with Squeekchain.</p>
+        </aside>
 
         <div class="status-strip" aria-label="Live Squeekchain">
           <p class="live" data-live><span class="dot"></span><span data-live-text>Checking the wheel…</span></p>
@@ -58,6 +62,9 @@
 
         <h2>Today on this device</h2>
         <ol id="board"></ol>
+        <h2>Squeek Chronicle</h2>
+        <p class="fine">Rounds you raced. A block or a wake line appears only when the live feed actually changed during that run.</p>
+        <ol id="chronicle"></ol>
 
         <footer class="site-foot">
           <p>A community project for the Squeekchain Buildooooor badge. Not affiliated with Squeekchain.</p>
@@ -94,6 +101,8 @@
             <span id="coins">0 seeds</span>
             <span id="pace">pace —</span>
             <span id="buffs"></span>
+          <span id="event-banner" hidden></span>
+          <span id="best-ghost" hidden>Best ghost</span>
           </div>
         </div>
         <div id="stage">
@@ -106,6 +115,7 @@
                 <button id="call-below" type="button">Less work</button>
               </div>
               <button id="call-skip" type="button">Sprint</button>
+              <button id="ready-home" class="text-home" type="button">Go home</button>
               <p id="course-best" class="best"></p>
             </div>
             <div id="paused" hidden>
@@ -113,6 +123,7 @@
                 <h2>Paused</h2>
                 <p>The wheel keeps its own time. Your run waits.</p>
                 <button id="resume" type="button">Resume</button>
+                <button id="pause-home" class="text-home" type="button">Go home</button>
               </div>
             </div>
           </div>
@@ -130,10 +141,11 @@
             <p id="over-best" class="meta"></p>
             <p id="over-call" class="meta"></p>
             <p id="over-detail" class="meta"></p>
-            <div class="row">
-              <button id="share" type="button">Share on X</button>
+            <div class="end-actions">
               <button id="again" type="button">Play again</button>
+              <button id="go-home" type="button">Go home</button>
             </div>
+            <button id="share" type="button">Share on X</button>
             <ol id="board-over"></ol>
           </section>
         </div>
@@ -145,6 +157,10 @@
             <h2 id="wallet-title">Wallet</h2>
             <button id="wallet-close" type="button" class="text">Close</button>
           </div>
+          <aside class="safety">
+            <p><strong>Connecting only shares your public address.</strong> Squeek Sprint never asks for your private key or seed phrase, never requests signatures, approvals or transactions, and can’t move your funds. Never share your seed phrase with anyone. Always do your own research (DYOR).</p>
+            <p>Community project, not affiliated with Squeekchain.</p>
+          </aside>
           <div id="wallet-picker">
             <p id="wallet-empty" class="note"></p>
             <div id="wallet-links" class="link-row"></div>

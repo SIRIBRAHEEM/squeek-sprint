@@ -34,7 +34,9 @@ Beating the ghost at the whistle adds 25%. The ghost is only drawn when `distanc
 
 `/` is the landing page. **Play now** opens `/play` and starts a run in one step. A wallet is not required. `/play` can be shared on its own; a direct visit shows the sprint button instead of auto-starting. Browser back returns to the landing page. `vercel.json` rewrites `/play` to `index.html`.
 
-The optional call on the landing (more work / less work) is attached to that Play now press. On `/play` the same choice sits on the ready card.
+The optional call on the landing (more work / less work) is attached to that Play now press. On `/play` the same choice sits on the ready card. After a run, **Play again** restarts that same course immediately (Enter or Space does too) and **Go home** returns to `/`. Pause and the `/play` ready card also have a way home.
+
+Your best run on a course is saved on this device and replayed as a **Best** ghost the next time you race that settlement hash. If a live poll shows `builder.anchor.blockHeight` go up, pickups pay double for a few seconds and the new height is announced. If `measurement.coreStatus` flips between `ACTIVE` and `IDLE`, the run announces that Squeektoshi woke up or curled up, and a wake briefly turns the magnet on. Those lines are written into the Squeek Chronicle on the landing page. Offline runs are labeled and do not invent a block or a wake.
 
 Connect wallet uses EIP-6963 to list injected wallets, then `window.ethereum` if nothing announced. It remembers the last wallet and reconnects with `eth_accounts` (no popup). Sepolia (`chainId` 11155111) can be switched or added. The address, or an ENS name when a mainnet reverse record verifies, is the name on the board and the share card. Holders get a gold-ear skin only.
 

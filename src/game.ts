@@ -12,6 +12,7 @@ import {
   WORLD_W,
 } from "./constants";
 import { renderFrame } from "./render";
+import { loadGhost, saveGhost, type GhostTape } from "./storage";
 import type { AudioBus } from "./audio";
 import type {
   CallSide,
@@ -87,6 +88,13 @@ export class Game {
   nickname = "Squeeker";
   address: string | null = null;
   holder = false;
+  hasBestGhost = false;
+  eventText = "";
+  eventTime = 0;
+  burstLeft = 0;
+  blocksSeen: string[] = [];
+  shifts: string[] = [];
+  blockAtStart: string | null = null;
   lastRun: RunRecord | null = null;
 
   private canvas: HTMLCanvasElement;
@@ -104,6 +112,13 @@ export class Game {
   private wheelBase: number | null = null;
   private wheelFrozen = false;
   private runStartX = 120;
+  private runTime = 0;
+  private sampleStep = 0.12;
+  private nextSample = 0;
+  private tapeX: number[] = [];
+  private tapeY: number[] = [];
+  private tapeDuck: number[] = [];
+  private replayGhost: GhostTape | null = null;
   private dust = 0;
   private lastHud = "";
 
@@ -176,8 +191,55 @@ export class Game {
     this.wheelFrozen = this.wheelBase === null;
     this.paceLive = this.wheelBase !== null;
     this.runStartX = this.player.x;
+    this.runTime = 0;
+    this.sampleStep = 0.12;
+    this.nextSample = 0;
+    this.tapeX = [];
+    this.tapeY = [];
+    this.tapeDuck = [];
+    this.replayGhost = loadGhost(opts.snapshot.course.seed);
+    this.hasBestGhost = this.replayGhost !== null;
+    this.eventText = "";
+    this.eventTime = 0;
+    this.burstLeft = 0;
+    this.blocksSeen = [];
+    this.shifts = [];
+    this.blockAtStart = opts.snapshot.wheel?.blockHeight ?? null;
     this.applyLiveWheel(opts.snapshot, true);
     this.audio.unlock();
+    this.noteHud(true);
+  }
+
+  replay(): void {
+    if (!this.runChain) return;
+    this.start({
+      nickname: this.nickname,
+      address: this.address,
+      holder: this.holder,
+      prediction: this.prediction,
+      snapshot: this.runChain,
+    });
+  }
+
+  /** A real settled block height arrived mid-run. Doubles pickups briefly. */
+  noteBlock(height: string): void {
+    if ((this.phase !== "playing" && this.phase !== "paused") || this.blocksSeen.includes(height)) return;
+    this.blocksSeen.push(height);
+    this.burstLeft = 5.5;
+    this.eventText = `Block ${height} settled`;
+    this.eventTime = 3.2;
+    this.audio.power();
+    this.noteHud(true);
+  }
+
+  /** The wheel's real coreStatus changed mid-run. */
+  noteWheel(from: string, to: string): void {
+    if (this.phase !== "playing" && this.phase !== "paused") return;
+    this.shifts.push(`${from}→${to}`);
+    this.eventText = to === "ACTIVE" ? "Squeektoshi woke up" : to === "IDLE" ? "Squeektoshi curled up" : `${from} → ${to}`;
+    this.eventTime = 3.2;
+    if (to === "ACTIVE") this.magnet = Math.max(this.magnet, 3.5);
+    this.audio.power();
     this.noteHud(true);
   }
 
@@ -289,6 +351,10 @@ export class Game {
     const h = dt / steps;
     for (let i = 0; i < steps; i += 1) this.step(h);
 
+    if (this.phase === "playing") this.recordGhost(dt);
+    this.burstLeft = Math.max(0, this.burstLeft - dt);
+    this.eventTime = Math.max(0, this.eventTime - dt);
+    if (this.eventTime === 0) this.eventText = "";
     this.shake = Math.max(0, this.shake - dt * 1.8);
     this.invuln = Math.max(0, this.invuln - dt);
     this.magnet = Math.max(0, this.magnet - dt);
@@ -489,7 +555,7 @@ export class Game {
       this.audio.power();
     }
     if (ent.kind !== "power") {
-      const gained = points * this.combo * (this.sprocket > 0 ? 2 : 1);
+      const gained = points * this.combo * (this.sprocket > 0 ? 2 : 1) * (this.burstLeft > 0 ? 2 : 1);
       this.pickupScore += gained;
       label = `+${gained}`;
       this.audio.coin(this.combo);
@@ -608,6 +674,7 @@ export class Game {
       resolvedRound: null,
       visual: this.visual,
     };
+    this.keepGhost(raw, snap?.course.seed ?? this.course.seed);
     this.paceBonus = paceBonus;
     this.score = raw;
     this.pickupScore = 0;
@@ -640,6 +707,47 @@ export class Game {
     if (!force && key === this.lastHud) return;
     this.lastHud = key;
     this.onChange();
+  }
+
+  private recordGhost(dt: number): void {
+    this.runTime += dt;
+    if (this.runTime < this.nextSample) return;
+    this.nextSample = this.runTime + this.sampleStep;
+    this.tapeX.push(Math.round(this.player.x));
+    this.tapeY.push(Math.round(this.player.y));
+    this.tapeDuck.push(this.player.duck ? 1 : 0);
+    if (this.tapeX.length <= 360) return;
+    this.tapeX = this.tapeX.filter((_, index) => index % 2 === 0);
+    this.tapeY = this.tapeY.filter((_, index) => index % 2 === 0);
+    this.tapeDuck = this.tapeDuck.filter((_, index) => index % 2 === 0);
+    this.sampleStep *= 2;
+  }
+
+  private keepGhost(score: number, seed: string): void {
+    if (this.tapeX.length < 8) return;
+    const previous = this.replayGhost?.score ?? 0;
+    if (previous > 0 && score <= previous) return;
+    saveGhost(seed, {
+      score,
+      step: this.sampleStep,
+      xs: this.tapeX,
+      ys: this.tapeY,
+      ducks: this.tapeDuck,
+    });
+  }
+
+  private bestGhostPose(): { x: number; y: number; duck: boolean } | null {
+    const tape = this.replayGhost;
+    if (!tape || this.phase === "attract") return null;
+    const index = Math.min(tape.xs.length - 1, this.runTime / tape.step);
+    const i0 = Math.floor(index);
+    const i1 = Math.min(tape.xs.length - 1, i0 + 1);
+    const t = index - i0;
+    return {
+      x: tape.xs[i0] + (tape.xs[i1] - tape.xs[i0]) * t,
+      y: tape.ys[i0] + (tape.ys[i1] - tape.ys[i0]) * t,
+      duck: tape.ducks[i0] === 1,
+    };
   }
 
   private draw(): void {
@@ -680,6 +788,8 @@ export class Game {
         viewW,
         skyExtra,
         holder: this.holder,
+        bestGhost: this.bestGhostPose(),
+        eventText: this.eventTime > 0 ? this.eventText : "",
       },
       this.reduceMotion,
     );

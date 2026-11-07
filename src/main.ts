@@ -1,15 +1,16 @@
-import "@fontsource/lilita-one/latin-400.css";
+import "@fontsource/pixelify-sans/latin-400.css";
+import "@fontsource/pixelify-sans/latin-600.css";
+import "@fontsource/pixelify-sans/latin-700.css";
 import "@fontsource/nunito/latin-600.css";
+import "@fontsource/nunito/latin-700.css";
 import "@fontsource/nunito/latin-800.css";
-import "@fontsource/nunito/latin-ext-600.css";
-import "@fontsource/nunito/latin-ext-800.css";
 import "./style.css";
 import { loadAccount, type HolderProfile } from "./account";
 import { AudioBus } from "./audio";
 import { emptySnapshot, loadChain } from "./chain";
 import { formatInt, wheelLabel } from "./format";
 import { Game } from "./game";
-import { bestForSeed, cleanNick, leaderboard, loadSave, resolvePending, writeSave } from "./storage";
+import { bestForSeed, cleanNick, leaderboard, loadChronicle, loadSave, pushChronicle, resolvePending, writeSave } from "./storage";
 import type { CallSide, ChainSnapshot, RunRecord } from "./types";
 import {
   SEPOLIA_CHAIN_ID,
@@ -49,6 +50,16 @@ const game = new Game(
     save.runs.unshift(run);
     save.runs = save.runs.slice(0, 40);
     writeSave(save);
+    pushChronicle({
+      at: run.at,
+      seedShort: run.seedShort,
+      fallback: run.seedFallback,
+      score: run.finalScore,
+      blockStart: game.blockAtStart,
+      blocksSeen: [...game.blocksSeen],
+      shifts: [...game.shifts],
+      round: run.round,
+    });
     paint();
   },
 );
@@ -81,6 +92,25 @@ function shareRun(run: RunRecord): void {
   url.searchParams.set("url", `${window.location.origin}/play`);
   url.searchParams.set("via", "siribraheem33");
   window.open(url.toString(), "_blank", "noopener,noreferrer");
+}
+
+function fillChronicle(list: HTMLOListElement): void {
+  list.replaceChildren();
+  const rows = loadChronicle();
+  if (rows.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "Race a course and it will be logged here.";
+    list.append(li);
+    return;
+  }
+  for (const row of rows.slice(0, 5)) {
+    const li = document.createElement("li");
+    const live = row.fallback ? "offline course" : row.seedShort;
+    const blocks = row.blocksSeen.length ? ` · block ${row.blocksSeen.join(", ")}` : "";
+    const shifts = row.shifts.length ? ` · ${row.shifts.join(", ")}` : "";
+    li.textContent = `${formatInt(row.score)} · ${live}${blocks}${shifts}`;
+    list.append(li);
+  }
 }
 
 function fillBoard(list: HTMLOListElement, runs: RunRecord[]): void {
@@ -269,17 +299,34 @@ function paint(): void {
     $("over-best").textContent = courseBest === null ? "First score on this course." : `Best on this course: ${formatInt(courseBest)}`;
     $("over-call").textContent =
       run.status === "pending" ? "Call open. A hit doubles this score on this device." : run.status === "hit" ? "Call hit. Score doubled." : run.status === "miss" ? "Call missed. Score stays as run." : run.status === "tie" ? "Call tied. Score unchanged." : "No call on this run.";
-    $("over-detail").textContent = run.paceBonus ? "Ahead of the wheel: +25%." : run.seedFallback ? "Fallback course. Live settlement hash unavailable." : `Course ${run.seedShort}.`;
+    const events = game.blocksSeen.length || game.shifts.length ? ` Live during the run: ${[...game.blocksSeen.map((height) => `block ${height}`), ...game.shifts].join(", ")}.` : "";
+    $("over-detail").textContent = `${run.paceBonus ? "Ahead of the wheel: +25%." : run.seedFallback ? "Fallback course. Live settlement hash unavailable." : `Course ${run.seedShort}.`}${game.hasBestGhost ? " Your best ghost was on the course." : ""}${events}`;
   }
+  const banner = document.getElementById("event-banner");
+  if (banner) {
+    banner.hidden = game.eventTime <= 0;
+    banner.textContent = game.eventText;
+  }
+  const ghostChip = document.getElementById("best-ghost");
+  if (ghostChip) ghostChip.hidden = !game.hasBestGhost;
   if (phase !== "playing") {
     fillBoard($("board"), save.runs);
     fillBoard($("board-over"), save.runs);
+    fillChronicle($("chronicle"));
   }
   $<HTMLButtonElement>("pause").hidden = !playing;
   $<HTMLButtonElement>("pause").textContent = phase === "paused" ? "Resume" : "Pause";
   $<HTMLButtonElement>("mute").textContent = save.muted ? "Muted" : "Sound";
   $<HTMLButtonElement>("mute").setAttribute("aria-pressed", save.muted ? "true" : "false");
   paintWallet();
+}
+
+function playAgain(): void {
+  audio.unlock();
+  audio.ui();
+  game.holder = Boolean(profile?.holder);
+  game.replay();
+  paint();
 }
 
 function begin(prediction: CallSide | null): void {
@@ -367,11 +414,10 @@ function wire(): void {
   $<HTMLButtonElement>("call-above").addEventListener("click", () => begin("above"));
   $<HTMLButtonElement>("call-below").addEventListener("click", () => begin("below"));
   $<HTMLButtonElement>("call-skip").addEventListener("click", () => begin(null));
-  $<HTMLButtonElement>("again").addEventListener("click", () => {
-    audio.ui();
-    game.toTitle();
-    paint();
-  });
+  $<HTMLButtonElement>("again").addEventListener("click", () => playAgain());
+  $<HTMLButtonElement>("go-home").addEventListener("click", () => go("/"));
+  $<HTMLButtonElement>("pause-home").addEventListener("click", () => go("/"));
+  $<HTMLButtonElement>("ready-home").addEventListener("click", () => go("/"));
   $<HTMLButtonElement>("share").addEventListener("click", () => {
     if (game.lastRun) shareRun(game.lastRun);
   });
@@ -408,6 +454,11 @@ function wire(): void {
   hold($<HTMLButtonElement>("duck"), (down) => game.setDuckHeld(down));
   window.addEventListener("keydown", (event) => {
     if (!document.body.classList.contains("route-play")) return;
+    if (game.phase === "over" && (event.code === "Enter" || event.code === "Space")) {
+      event.preventDefault();
+      playAgain();
+      return;
+    }
     const typing = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLButtonElement;
     if (typing) return;
     if (["Space", "ArrowUp", "ArrowDown", "KeyW", "KeyS"].includes(event.code)) event.preventDefault();
@@ -431,6 +482,20 @@ function wire(): void {
   window.addEventListener("resize", () => {
     if (document.body.classList.contains("route-play")) game.resize();
   });
+}
+
+function observeChain(prev: ChainSnapshot, next: ChainSnapshot): void {
+  if ((game.phase !== "playing" && game.phase !== "paused") || !prev.wheelKnown || !next.wheelKnown) return;
+  const before = prev.wheel?.blockHeight;
+  const after = next.wheel?.blockHeight;
+  if (before && after && /^\d+$/.test(before) && /^\d+$/.test(after) && BigInt(after) > BigInt(before)) {
+    game.noteBlock(after);
+  }
+  const from = prev.wheel?.coreStatus;
+  const to = next.wheel?.coreStatus;
+  if (from && to && from !== to && (from === "ACTIVE" || from === "IDLE") && (to === "ACTIVE" || to === "IDLE")) {
+    game.noteWheel(from, to);
+  }
 }
 
 async function refresh(): Promise<void> {
@@ -465,6 +530,7 @@ async function refresh(): Promise<void> {
     next.decimals = chain.decimals;
   }
   link = "live";
+  observeChain(chain, next);
   chain = next;
   const summary = resolvePending(save.runs, chain.settlements);
   if (summary.notes.length > 0) {

@@ -47,6 +47,94 @@ export function leaderboard(runs: RunRecord[]): RunRecord[] {
   return [...runs].sort((a, b) => b.finalScore - a.finalScore || b.at - a.at).slice(0, 8);
 }
 
+export interface GhostTape {
+  score: number;
+  step: number;
+  xs: number[];
+  ys: number[];
+  ducks: number[];
+}
+
+export interface ChronicleEntry {
+  at: number;
+  seedShort: string;
+  fallback: boolean;
+  score: number;
+  blockStart: string | null;
+  blocksSeen: string[];
+  shifts: string[];
+  round: string | null;
+}
+
+const GHOST_KEY = "squeek-sprint-ghosts-v1";
+const CHRONICLE_KEY = "squeek-sprint-chronicle-v1";
+
+function validTape(value: unknown): value is GhostTape {
+  if (typeof value !== "object" || value === null) return false;
+  const tape = value as Partial<GhostTape>;
+  return (
+    typeof tape.score === "number" &&
+    typeof tape.step === "number" &&
+    Array.isArray(tape.xs) &&
+    Array.isArray(tape.ys) &&
+    Array.isArray(tape.ducks) &&
+    tape.xs.length > 4 &&
+    tape.xs.length === tape.ys.length &&
+    tape.xs.length === tape.ducks.length
+  );
+}
+
+export function loadGhost(seed: string): GhostTape | null {
+  try {
+    const raw = localStorage.getItem(GHOST_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const tape = parsed[seed];
+    return validTape(tape) ? tape : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveGhost(seed: string, tape: GhostTape): void {
+  try {
+    const raw = localStorage.getItem(GHOST_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, GhostTape>) : {};
+    parsed[seed] = tape;
+    const keys = Object.keys(parsed);
+    if (keys.length > 8) delete parsed[keys[0]];
+    localStorage.setItem(GHOST_KEY, JSON.stringify(parsed));
+  } catch {
+    /* the run still counts */
+  }
+}
+
+function validChronicle(value: unknown): value is ChronicleEntry {
+  if (typeof value !== "object" || value === null) return false;
+  const row = value as Partial<ChronicleEntry>;
+  return typeof row.at === "number" && typeof row.score === "number" && typeof row.seedShort === "string" && Array.isArray(row.blocksSeen) && Array.isArray(row.shifts);
+}
+
+export function loadChronicle(): ChronicleEntry[] {
+  try {
+    const raw = localStorage.getItem(CHRONICLE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown[];
+    return Array.isArray(parsed) ? parsed.filter(validChronicle).slice(0, 12) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function pushChronicle(entry: ChronicleEntry): void {
+  const rows = [entry, ...loadChronicle()].slice(0, 12);
+  try {
+    localStorage.setItem(CHRONICLE_KEY, JSON.stringify(rows));
+  } catch {
+    /* ignore quota */
+  }
+}
+
 export function bestForSeed(runs: RunRecord[], seed: string): number | null {
   let best: number | null = null;
   for (const run of runs) {

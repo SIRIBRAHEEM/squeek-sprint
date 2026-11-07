@@ -62,7 +62,7 @@ async function fetchJson(url: string): Promise<unknown> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 6000);
   try {
-    const res = await fetch(url, { headers: { accept: "application/json" }, signal: ctrl.signal });
+    const res = await fetch(url, { headers: { accept: "application/json" }, cache: "no-store", signal: ctrl.signal });
     const ctype = res.headers.get("content-type") || "";
     if (!res.ok || !ctype.includes("json")) throw new Error("bad");
     return await res.json();
