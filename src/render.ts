@@ -42,52 +42,52 @@ interface Palette {
 
 const PALETTES: Record<Visual, Palette> = {
   day: {
-    skyTop: "#ffd9a0",
-    skyBottom: "#f08a3c",
-    hill: "#d9764a",
-    hillFar: "#e8a06a",
-    soil: "#6b3e28",
-    soilDeep: "#4a291b",
-    grass: "#d7a15a",
-    pit: "#1a100c",
-    ceiling: "#5a3424",
-    root: "#3d2418",
+    skyTop: "#10162c",
+    skyBottom: "#3a2158",
+    hill: "#24143a",
+    hillFar: "#312050",
+    soil: "#120c18",
+    soilDeep: "#09070f",
+    grass: "#ff8a3d",
+    pit: "#07060c",
+    ceiling: "#0d101c",
+    root: "#1a1430",
   },
   night: {
-    skyTop: "#14182f",
-    skyBottom: "#2a3566",
-    hill: "#1c2748",
-    hillFar: "#24345c",
-    soil: "#2a3148",
-    soilDeep: "#171c2e",
-    grass: "#3d4d73",
-    pit: "#070910",
-    ceiling: "#1a2036",
-    root: "#101525",
+    skyTop: "#070b18",
+    skyBottom: "#152044",
+    hill: "#10182e",
+    hillFar: "#18243f",
+    soil: "#0c101c",
+    soilDeep: "#070910",
+    grass: "#2ee6c7",
+    pit: "#05070d",
+    ceiling: "#080c16",
+    root: "#12182c",
   },
   dusk: {
-    skyTop: "#f0c9a0",
-    skyBottom: "#c47b62",
-    hill: "#a86458",
-    hillFar: "#d09a86",
-    soil: "#6a4638",
-    soilDeep: "#463026",
-    grass: "#c49a78",
-    pit: "#241610",
-    ceiling: "#5c4034",
-    root: "#3a2820",
+    skyTop: "#12141f",
+    skyBottom: "#2a2438",
+    hill: "#221c2c",
+    hillFar: "#2c2638",
+    soil: "#141018",
+    soilDeep: "#0c0a10",
+    grass: "#8d7a9a",
+    pit: "#08070c",
+    ceiling: "#101018",
+    root: "#1a1824",
   },
   fault: {
-    skyTop: "#f0b4a4",
-    skyBottom: "#c45448",
-    hill: "#a84840",
-    hillFar: "#d47868",
-    soil: "#6a342c",
-    soilDeep: "#3e1e1a",
-    grass: "#c47a62",
-    pit: "#1c0c0a",
-    ceiling: "#5c3028",
-    root: "#3a1c18",
+    skyTop: "#1a1018",
+    skyBottom: "#3a1824",
+    hill: "#2a1420",
+    hillFar: "#3a1c28",
+    soil: "#160e12",
+    soilDeep: "#0c080a",
+    grass: "#e25b4a",
+    pit: "#0a0608",
+    ceiling: "#140c10",
+    root: "#241018",
   },
 };
 
@@ -117,7 +117,8 @@ export function renderFrame(ctx: CanvasRenderingContext2D, scene: Scene, reduceM
   const pal = PALETTES[scene.visual];
   const sky = ctx.createLinearGradient(0, 0, 0, GROUND);
   sky.addColorStop(0, pal.skyTop);
-  sky.addColorStop(1, pal.skyBottom);
+  sky.addColorStop(0.72, pal.skyBottom);
+  sky.addColorStop(1, scene.visual === "night" ? "#12324a" : scene.visual === "day" ? "#5a2a28" : pal.skyBottom);
   const width = scene.viewW;
   ctx.fillStyle = sky;
   ctx.fillRect(0, -scene.skyExtra, width, WORLD_H + scene.skyExtra);
@@ -170,13 +171,13 @@ function drawStars(ctx: CanvasRenderingContext2D, scene: Scene): void {
     const span = scene.viewW;
     const x = ((star.x - scene.cameraX * 0.05) % span + span) % span;
     const alpha = 0.45 + Math.sin(scene.time * 2 + star.tw) * 0.35;
-    ctx.fillStyle = `rgba(255, 244, 220, ${alpha})`;
+    ctx.fillStyle = `rgba(190, 255, 245, ${alpha})`;
     ctx.beginPath();
     ctx.arc(x, star.y, star.r, 0, Math.PI * 2);
     ctx.fill();
   }
   const moonX = 470;
-  ctx.fillStyle = "#f4e7c4";
+  ctx.fillStyle = "#d7fff6";
   ctx.beginPath();
   ctx.arc(moonX, 120, 28, 0, Math.PI * 2);
   ctx.fill();
@@ -187,14 +188,14 @@ function drawStars(ctx: CanvasRenderingContext2D, scene: Scene): void {
 }
 
 function drawSun(ctx: CanvasRenderingContext2D, scene: Scene): void {
-  ctx.fillStyle = scene.visual === "fault" ? "rgba(255,220,180,0.35)" : "rgba(255,236,190,0.85)";
+  ctx.fillStyle = scene.visual === "fault" ? "rgba(226,91,74,0.45)" : "rgba(255,138,61,0.85)";
   ctx.beginPath();
   ctx.arc(160 - (scene.cameraX * 0.02) % 40, 130, 36, 0, Math.PI * 2);
   ctx.fill();
 }
 
 function drawClouds(ctx: CanvasRenderingContext2D, scene: Scene): void {
-  ctx.fillStyle = "rgba(255, 248, 236, 0.45)";
+  ctx.fillStyle = "rgba(46, 230, 199, 0.16)";
   const scroll = scene.cameraX * 0.06;
   for (const base of [70, 250, 430]) {
     const x = ((base - scroll) % 640 + 640) % 640;
@@ -211,7 +212,7 @@ function drawWheel(ctx: CanvasRenderingContext2D, scene: Scene, reduceMotion: bo
   ctx.save();
   ctx.translate(cx, cy);
   ctx.globalAlpha = scene.wheelKnown ? 0.55 : 0.28;
-  ctx.strokeStyle = scene.visual === "night" ? "#d7e2ff" : "#fff4df";
+  ctx.strokeStyle = scene.visual === "night" ? "#2ee6c7" : "#ff8a3d";
   ctx.lineWidth = 8;
   ctx.beginPath();
   ctx.arc(0, 0, 58, 0, Math.PI * 2);
@@ -228,8 +229,8 @@ function drawWheel(ctx: CanvasRenderingContext2D, scene: Scene, reduceMotion: bo
   }
   ctx.restore();
   ctx.globalAlpha = 1;
-  ctx.fillStyle = scene.visual === "night" ? "#f6d7b8" : "#2a1b12";
-  ctx.font = "700 13px Nunito, Trebuchet MS, sans-serif";
+  ctx.fillStyle = "#d7fff6";
+  ctx.font = "700 13px Outfit, sans-serif";
   ctx.textAlign = "center";
   const label = scene.rpm === null ? "wheel offline" : `${scene.rpm.toFixed(1)} rpm`;
   ctx.fillText(label, cx, cy + 82);
@@ -379,7 +380,7 @@ function drawSqk(ctx: CanvasRenderingContext2D, x: number, ent: CourseEnt, scene
   ctx.closePath();
   ctx.fill();
   ctx.fillStyle = "#fff8ea";
-  ctx.font = "700 11px Nunito, Trebuchet MS, sans-serif";
+  ctx.font = "700 11px Outfit, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("S", cx, cy + 4);
   ctx.textAlign = "left";
@@ -478,7 +479,7 @@ function drawGhost(ctx: CanvasRenderingContext2D, scene: Scene): void {
   });
   ctx.globalAlpha = 1;
   ctx.fillStyle = "#d7e4ff";
-  ctx.font = "700 12px Nunito, Trebuchet MS, sans-serif";
+  ctx.font = "700 12px Outfit, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText(label, clamped + 20, GROUND - 44);
   ctx.restore();
@@ -503,8 +504,8 @@ function drawBestGhost(ctx: CanvasRenderingContext2D, scene: Scene): void {
     holder: true,
   });
   ctx.globalAlpha = 0.9;
-  ctx.fillStyle = "#fff6ea";
-  ctx.font = "800 12px Nunito, Trebuchet MS, sans-serif";
+  ctx.fillStyle = "#2ee6c7";
+  ctx.font = "700 12px Outfit, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("Best", x + 26, ghost.y - 8);
   ctx.restore();
@@ -513,14 +514,14 @@ function drawBestGhost(ctx: CanvasRenderingContext2D, scene: Scene): void {
 
 function drawEvent(ctx: CanvasRenderingContext2D, scene: Scene): void {
   ctx.save();
-  ctx.font = "800 18px Nunito, Trebuchet MS, sans-serif";
+  ctx.font = "700 18px Outfit, sans-serif";
   ctx.textAlign = "center";
   const width = Math.min(scene.viewW - 40, ctx.measureText(scene.eventText).width + 28);
   const x = (scene.viewW - width) / 2;
-  ctx.fillStyle = "rgba(20, 12, 8, 0.78)";
+  ctx.fillStyle = "rgba(8, 12, 24, 0.82)";
   roundRect(ctx, x, 74, width, 32, 16);
   ctx.fill();
-  ctx.fillStyle = "#fff6ea";
+  ctx.fillStyle = "#2ee6c7";
   ctx.fillText(scene.eventText, scene.viewW / 2, 96);
   ctx.restore();
   ctx.textAlign = "left";
@@ -700,7 +701,7 @@ function drawParticles(ctx: CanvasRenderingContext2D, scene: Scene): void {
 }
 
 function drawFloaters(ctx: CanvasRenderingContext2D, scene: Scene): void {
-  ctx.font = "800 16px Nunito, Trebuchet MS, sans-serif";
+  ctx.font = "700 16px Outfit, sans-serif";
   ctx.textAlign = "center";
   for (const floater of scene.floaters) {
     ctx.globalAlpha = Math.max(0, floater.life);

@@ -1,9 +1,8 @@
-import "@fontsource/pixelify-sans/latin-400.css";
-import "@fontsource/pixelify-sans/latin-600.css";
-import "@fontsource/pixelify-sans/latin-700.css";
-import "@fontsource/nunito/latin-600.css";
-import "@fontsource/nunito/latin-700.css";
-import "@fontsource/nunito/latin-800.css";
+import "@fontsource/space-grotesk/latin-600.css";
+import "@fontsource/space-grotesk/latin-700.css";
+import "@fontsource/outfit/latin-400.css";
+import "@fontsource/outfit/latin-600.css";
+import "@fontsource/outfit/latin-700.css";
 import "./style.css";
 import { loadAccount, type HolderProfile } from "./account";
 import { AudioBus } from "./audio";
