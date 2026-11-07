@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#2a1b12" />
+    <meta
+      name="description"
+      content="Squeek Sprint is an endless runner paced by Squeektoshi’s live wheel and a course seeded by the latest Squeekchain settlement."
+    />
+    <title>Squeek Sprint</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!--
+      SQUEEKCHAIN DIRECT VERIFICATION — PAGE TAG
+      When you submit this site at https://squeekchain.com/genesis/code (Direct),
+      Squeekchain gives you a page tag. Paste that exact tag on the next line,
+      still inside <head>, then redeploy. Do not invent a value.
+    -->
+  </head>
+  <body>
+    <div id="app">
+      <header class="top">
+        <div class="brand">
+          <span class="ears" aria-hidden="true"></span>
+          <div>
+            <p class="kicker">Squeekchain runner</p>
+            <p class="word">Squeek Sprint</p>
+          </div>
+        </div>
+        <p id="live" class="live"><span id="live-dot"></span><span id="live-text">Checking the wheel…</span></p>
+        <button id="pause" type="button">Pause</button>
+        <button id="mute" type="button" aria-pressed="false">Sound on</button>
+      </header>
+
+      <div id="chain" class="chain" aria-label="Live Squeekchain">
+        <span id="rpm">RPM —</span>
+        <span id="wheel-state">wheel —</span>
+        <span id="block">block —</span>
+        <span id="round">round —</span>
+        <span id="course">course —</span>
+      </div>
+
+      <div id="stage">
+        <div id="frame">
+          <canvas id="view" width="960" height="540" aria-label="Squeek Sprint playfield"></canvas>
+          <div id="hud">
+            <div class="hud-score">
+              <span id="score">0</span>
+              <small>score</small>
+            </div>
+            <div id="lives" class="lives" aria-label="Lives">♥ ♥ ♥</div>
+            <div class="hud-side">
+              <span id="coins">0 seeds</span>
+              <span id="pace">pace —</span>
+              <span id="buffs"></span>
+            </div>
+          </div>
+          <div id="paused" hidden>
+            <div class="pause-card">
+              <h2>Paused</h2>
+              <p>The wheel keeps its own time. Your run waits.</p>
+              <button id="resume" type="button">Resume</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="touch">
+        <button id="duck" type="button">Duck</button>
+        <button id="pause-touch" type="button">Pause</button>
+        <button id="jump" type="button">Jump</button>
+      </div>
+
+      <div id="overlay">
+        <section id="title-panel" class="sheet">
+          <p class="kicker">Race the live wheel</p>
+          <h1>Squeek Sprint</h1>
+          <p class="deck">
+            You are a hamster on a course cut from the latest Squeekchain settlement. Squeektoshi’s real
+            wheel sets the tempo. Beat his pace, grab seeds, and call the next round’s work.
+          </p>
+
+          <div id="live-card" class="card">
+            <p id="live-card-body">Waiting for api.squeekchain.com…</p>
+          </div>
+
+          <label class="nick" for="nick">Nickname <input id="nick" maxlength="16" autocomplete="nickname" placeholder="Squeeker" /></label>
+
+          <div class="card call">
+            <h2>Call the next settlement</h2>
+            <p id="call-copy">The call needs a real settlement before it can be placed.</p>
+            <div class="row">
+              <button id="call-above" type="button" disabled>More work</button>
+              <button id="call-below" type="button" disabled>Less work</button>
+            </div>
+            <button id="call-skip" class="ghost" type="button">Sprint with no call</button>
+          </div>
+
+          <p id="course-best" class="best"></p>
+
+          <details>
+            <summary>How to play</summary>
+            <ul>
+              <li>Jump crates and wheel-spokes. Duck the hanging beams. Don’t drop in a gap.</li>
+              <li>Seeds and SQK sparks build a combo. Shield, magnet and sprocket pickups change the run.</li>
+              <li>Day, night and speed follow the live wheel. Asleep means night hazards. A right call doubles the score later.</li>
+              <li>Keyboard: Space or ↑ jump, ↓ duck, P pause, M mute. On a phone, use the buttons.</li>
+            </ul>
+          </details>
+
+          <h2 class="board-title">This device</h2>
+          <ol id="board"></ol>
+          <p class="fine">
+            Scores stay in this browser. No wallet, no tokens, no real stakes. A community project for the
+            Squeekchain Buildooooor badge — not affiliated with Squeekchain.
+          </p>
+        </section>
+
+        <section id="over-panel" class="sheet" hidden>
+          <p class="kicker">Run over</p>
+          <h1 id="over-score">0</h1>
+          <p id="over-detail"></p>
+          <div class="row">
+            <button id="share" type="button">Share on X</button>
+            <button id="again" type="button">Back to the burrow</button>
+          </div>
+          <ol id="board-over"></ol>
+        </section>
+      </div>
+
+      <div id="toast" role="status" aria-live="polite"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
